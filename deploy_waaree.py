@@ -1,5 +1,5 @@
 """ 
-V2 - 26/11/25
+V2 - 28/11/25
 """
 
 import cv2
@@ -47,7 +47,7 @@ logging.basicConfig(
 )
 
 # API configuration
-API_KEY = "22AIzaSyCFfOYXv6YWvzyoNP22VuSY43tpVHTlGBkEg22"
+API_KEY = "22AIzaSyCFfOYXv6YWvzyoNP22VuSY43tpVHTlGBkEg22"  #"AIzaSyCcWQX3S56uG_puWL9dOvLtU0iJl5g7UyY"
 GEMINI_API = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 
 # ZMQ Client Configuration
@@ -781,65 +781,61 @@ def process_downtime_monitoring(img, roi_configs, cam_name, frequency_sec, area_
         logging.error(f"Error in downtime monitoring: {e}")
         return False, "Error", img, ""
 
-def check_camera_angle(ref_img, current_img, min_matches=20, deviation_threshold=2.5):
+def check_camera_angle(ref_img, current_img, min_matches=20, deviation_threshold=15):
     """
     Compare a reference image and a current image to check for camera angle changes.
     """
-    try:
-        # Convert both images to grayscale
-        gray1 = cv2.cvtColor(ref_img, cv2.COLOR_BGR2GRAY)
-        gray2 = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY)
-        
-        # ORB feature detector and descriptor
-        orb = cv2.ORB_create(nfeatures=2000)
-        kp1, des1 = orb.detectAndCompute(gray1, None)
-        kp2, des2 = orb.detectAndCompute(gray2, None)
+    # Convert both images to grayscale
+    gray1 = cv2.cvtColor(ref_img, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY)
+    
+    # ORB feature detector and descriptor
+    orb = cv2.ORB_create(nfeatures=2000)
+    kp1, des1 = orb.detectAndCompute(gray1, None)
+    kp2, des2 = orb.detectAndCompute(gray2, None)
 
-        # Ensure features are found in both images
-        if des1 is None or des2 is None:
-            return 'NO_CHANGE', 'Could not find features in one image.', None
+    # Ensure features are found in both images
+    if des1 is None or des2 is None:
+        return 'NO_CHANGE', 'Could not find features in one image.', None
 
-        # Brute-force matching with Hamming distance
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        matches = bf.match(des1, des2)
+    # Brute-force matching with Hamming distance
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
 
-        # Check if enough matches exist
-        if len(matches) < min_matches:
-            reason = f"Found only {len(matches)} matches (min is {min_matches})."
-            return 'NO_CHANGE', reason, None
+    # Check if enough matches exist
+    if len(matches) < min_matches:
+        reason = f"Found only {len(matches)} matches (min is {min_matches})."
+        return 'NO_CHANGE', reason, None
 
-        # Sort and select best matches
-        matches = sorted(matches, key=lambda x: x.distance)
-        good_matches = matches[:100]
+    # Sort and select best matches
+    matches = sorted(matches, key=lambda x: x.distance)
+    good_matches = matches[:100]
 
-        # Extract corresponding points
-        src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+    # Extract corresponding points
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        # Compute homography matrix
-        H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+    # Compute homography matrix
+    H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
-        if H is None:
-            return 'NO_CHANGE', 'Homography computation failed.', None
+    if H is None:
+        return 'NO_CHANGE', 'Homography computation failed.', None
 
-        # Compute deviation from identity
-        identity_matrix = np.identity(3)
-        deviation = np.linalg.norm(H - identity_matrix)
+    # Compute deviation from identity
+    identity_matrix = np.identity(3)
+    deviation = np.linalg.norm(H - identity_matrix)
 
-        # Determine if deviation exceeds threshold
-        if deviation > deviation_threshold:
-            status = 'ANGLE_CHANGED'
-            reason = f"Deviation ({deviation:.2f}) exceeds threshold ({deviation_threshold:.2f})."
-        else:
-            status = 'NO_CHANGE'
-            reason = f"Deviation ({deviation:.2f}) is within threshold."
-            
-        return status, reason, deviation
-    except Exception as e:
-        logging.error(f"Error in camera angle check: {e}")
-        return 'ERROR', str(e), None
+    # Determine if deviation exceeds threshold
+    if deviation > deviation_threshold:
+        status = 'ANGLE_CHANGED'
+        reason = f"Deviation ({deviation:.2f}) exceeds threshold ({deviation_threshold:.2f})."
+    else:
+        status = 'NO_CHANGE'
+        reason = f"Deviation ({deviation:.2f}) is within threshold."
+    
+    return status, reason, deviation
 
-def process_camera_angle_check(img, cam_name, min_matches=30, deviation_threshold=3.5):
+def process_camera_angle_check(img, cam_name, min_matches=30, deviation_threshold=15):
     """
     Check if camera angle has changed by comparing with reference image.
     If reference doesn't exist, create it from current frame.
@@ -851,13 +847,13 @@ def process_camera_angle_check(img, cam_name, min_matches=30, deviation_threshol
         if not os.path.exists(ref_img_path):
             cv2.imwrite(ref_img_path, img)
             _camera_angle_refs[cam_name] = ref_img_path
-            return False, img  # No check on first frame
+            return False, img, None  # No check on first frame
         
         # Load reference image
         ref_img = cv2.imread(ref_img_path)
         if ref_img is None:
             logging.error(f"Failed to load reference image: {ref_img_path}")
-            return False, img
+            return False, img, None
         
         # Compare current frame with reference
         status, reason, deviation = check_camera_angle(ref_img, img, min_matches, deviation_threshold)
@@ -873,6 +869,7 @@ def process_camera_angle_check(img, cam_name, min_matches=30, deviation_threshol
     except Exception as e:
         logging.error(f"Error in camera angle check for {cam_name}: {e}")
         return False, img, None
+    
 def process_intrusion(img, roi=None):
     """Detect unauthorized persons"""
     try:
@@ -1270,7 +1267,7 @@ def process_camera(cam_config):
             
             if time_range[0] <= current_time <= time_range[1]:
                 angle_changed, annotated_img, deviation = process_camera_angle_check(
-                    img, cam_name, min_matches=30, deviation_threshold=3.5
+                    img, cam_name, min_matches=50, deviation_threshold=10
                 )
                 
                 if angle_changed:
