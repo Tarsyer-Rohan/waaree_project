@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Waaree Plant Analysis</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo-left">
+        <img src="/static/images/waaree-logo.png" alt="Waaree" class="brand-logo" />
+      </div>
+      <div class="header-center">
+        <div class="title-wrap">
+          <h1 class="main-heading">Waaree AI CCTV Safety Productivity Analysis</h1>
+        </div>
+      </div>
+      <div class="logo-right">
+        <img src="/static/images/tarsyer-logo.png" alt="Partner" class="brand-logo" />
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-group">
+        <div class="sidebar-section-title">Menu</div>
+        <button class="nav-item active" data-href="/">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          <span>Strategic Area</span>
+        </button>
+        <button class="nav-item" data-href="/production">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+            <path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path>
+          </svg>
+          <span>Production</span>
+        </button>
+        <button class="nav-item" data-href="/compliance">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          <span>Compliance</span>
+        </button>
+        <button class="nav-item" data-href="/footfall_vehicle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="12" r="3"></circle>
+            <circle cx="16" cy="12" r="3"></circle>
+            <rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect>
+          </svg>
+          <span>Footfall & Vehicle Count</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="top-cards">
+        <a href="/alerts?section=strategic" class="card system-status alerts-card" id="alerts-card">
+          <div class="status-left">
+            <h4 class="status-title">SYSTEM STATUS</h4>
+            <p class="status-sub">Current alert monitoring</p>
+            <div class="status-number" id="total-alerts">0</div>
+            <div class="status-caption">Total Alerts</div>
+          </div>
+          <div class="status-right">
+            <div class="system-dot online"></div>
+            <div class="system-text">System Operational</div>
+          </div>
+        </a>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    async function loadCount() {
+      try {
+        const res = await fetch("/api/alerts_data?section=strategic");
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("total-alerts").innerText = data.total || 0;
+        }
+      } catch (err) {
+        console.error("Error loading count:", err);
+      }
+    }
+    loadCount();
+  </script>
+  <script src="/static/js/common.js"></script>
+</body>
+</html>
