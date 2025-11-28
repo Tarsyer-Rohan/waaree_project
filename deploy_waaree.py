@@ -47,7 +47,7 @@ logging.basicConfig(
 )
 
 # API configuration
-API_KEY = "AIzaSyCFfOYXv6YWvzyoNPVuSY43tpVHTlGBkEg"  #"AIzaSyCcWQX3S56uG_puWL9dOvLtU0iJl5g7UyY"
+API_KEY = "22AIzaSyCFfOYXv6YWvzyoNP22VuSY43tpVHTlGBkEg22"
 GEMINI_API = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 
 # ZMQ Client Configuration

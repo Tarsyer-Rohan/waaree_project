@@ -37,7 +37,7 @@ logging.basicConfig(
 )
 
 # API configuration
-API_KEY = "AIzaSyCFfOYXv6YWvzyoNPVuSY43tpVHTlGBkEg"
+API_KEY = ""
 GEMINI_API = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 
 # Initialize models
